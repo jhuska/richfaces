@@ -84,7 +84,7 @@
                 <cdk:scriptObject name="options">
                     <cdk:scriptOption
                         attributes="acceptedTypes maxFilesQuantity immediateUpload onfileselect noDuplicate onfilesubmit ontyperejected onuploadcomplete doneLabel
-						sizeExceededLabel stoppedLabel serverErrorLabel clearLabel deleteLabel onclear" />
+						sizeExceededLabel stoppedLabel serverErrorLabel clearLabel deleteLabel onclear execute render" />
                 </cdk:scriptObject>
                 <script type="text/javascript">new RichFaces.ui.FileUpload(#{toScriptArgs(clientId, options)});</script>
             </c:if>
