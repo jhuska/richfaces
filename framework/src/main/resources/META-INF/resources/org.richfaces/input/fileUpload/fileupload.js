@@ -124,16 +124,15 @@
             clearLabel: "Clear",
             deleteLabel: "Delete",
 
-            __addItems : function() {
+            __addFiles : function(files) {
                 var context = {
                     acceptedFileNames: [],
                     rejectedFileNames: []
                 };
 
-                var multipleInputFiles = this.input.prop("files");
-                if (multipleInputFiles) {
-                    for (var i = 0 ; i < multipleInputFiles.length; i++) {
-                        this.__tryAddItem(context, multipleInputFiles[i]);
+                if (files) {
+                    for (var i = 0 ; i < files.length; i++) {
+                        this.__tryAddItem(context, files[i]);
 
                         if (this.maxFilesQuantity && (context.acceptedFileNames.length >= this.maxFilesQuantity)) {
                             this.addButton.hide();
@@ -154,33 +153,15 @@
                 }
             },
 
+            __addItems : function() {
+                this.__addFiles(this.input.prop("files"));
+            },
+
             __addItemsFromDrop: function(dropEvent) {
                 dropEvent.stopPropagation();
                 dropEvent.preventDefault();
 
-                var context = {
-                    acceptedFileNames: [],
-                    rejectedFileNames: []
-                };
-
-                var dropFiles = dropEvent.originalEvent.dataTransfer.files;
-
-                    for (var i = 0 ; i < dropFiles.length; i++) {
-                        this.__tryAddItem(context, dropFiles[i]);
-
-                        if (this.maxFilesQuantity && (context.acceptedFileNames.length >= this.maxFilesQuantity)) {
-                            this.addButton.hide();
-                            break;
-                        }
-                    }
-
-                if (context.rejectedFileNames.length > 0) {
-                    rf.Event.fire(this.element, "ontyperejected", context.rejectedFileNames.join(','));
-                }
-
-                if (this.immediateUpload) {
-                    this.__startUpload();
-                }
+                this.__addFiles(dropEvent.originalEvent.dataTransfer.files);
             },
 
             __tryAddItem: function(context, file) {
@@ -267,7 +248,8 @@
             },
 
             __startUpload: function() {
-                if (!this.items.length) {return;}
+                if (!this.items.length) {this.__finishUpload; return;}
+                //this.input.val("");
                 this.loadableItem = this.items.shift();
                 this.__updateButtons();
                 this.loadableItem.startUploading();
@@ -386,6 +368,10 @@
                     }
                 }
                 return s;
+            },
+
+            __finishUpload : function() {
+                rf.submitForm(this.form, {"org.richfaces.ajax.component": this.id}, this.id);
             }
         };
     })());
@@ -393,7 +379,7 @@
 
     var Item = function(fileUpload, file) {
         this.fileUpload = fileUpload;
-        this.input = fileUpload.input;
+        //this.input = fileUpload.input;
         this.model = {name: file.name, state: ITEM_STATE.NEW, file: file};
     };
 
@@ -411,7 +397,7 @@
             },
 
             removeOrStop: function() {
-                this.input.remove();
+                //this.input.remove();
                 this.element.remove();
                 this.fileUpload.__removeItem(this);
             },
@@ -419,7 +405,7 @@
             startUploading: function() {
                 this.state.css("display", "block");
                 this.link.html("");
-                this.input.attr("name", this.fileUpload.id);
+                //this.input.attr("name", this.fileUpload.id);
                 this.model.state = ITEM_STATE.UPLOADING;
                 this.uid = Math.random();
 
@@ -444,16 +430,13 @@
                     console.log(fileName);
                     console.log(e || 'no event');
                     this.fileUpload.__startUpload();
+
+                    var state = ITEM_STATE.DONE;
+                    //this.input.remove();
+                    this.state.html(this.fileUpload[state + "Label"]);
+                    this.link.html(this.fileUpload["clearLabel"]);
+                    this.model.state = state;
                     }, this);
-
-                var state = ITEM_STATE.DONE;
-                this.input.remove();
-                this.state.html(this.fileUpload[state + "Label"]);
-                this.link.html(this.fileUpload["clearLabel"]);
-                this.model.state = state;
-
-                formData.append('javax.faces.partial.ajax', 'true');
-                formData.append('javax.faces.source', this.fileUpload.id);
 
                 var render = this.fileUpload.render,
                     execute = this.fileUpload.execute,
@@ -477,8 +460,6 @@
                                 renderString = render;
                         }
                     }
-
-                    formData.append('javax.faces.partial.render', renderString);
                 }
 
                 if (execute != '@none') {
@@ -499,9 +480,18 @@
                                 executeString = execute;
                         }
                     }
-
-                    formData.append('javax.faces.partial.execute', executeString);
                 }
+
+                formData.append('javax.faces.partial.ajax', 'true');
+                formData.append('javax.faces.source', this.fileUpload.id);
+
+                //if (render != '@none') {
+                //    formData.append('javax.faces.partial.execute', executeString);
+                //}
+                //if (execute != '@none') {
+                    //formData.append('javax.faces.partial.render', renderString);
+                    formData.append('javax.faces.partial.execute', this.fileUpload.id);
+                //}
 
                 xhr.open('POST', newAction, true);
 
@@ -524,7 +514,7 @@
                 //     this.fileUpload.progressBar.disable();
                 //     this.fileUpload.hiddenContainer.append(this.fileUpload.progressBarElement.detach());
                 // }
-                this.input.remove();
+                //this.input.remove();
                 this.state.html(this.fileUpload[state + "Label"]);
                 this.link.html(this.fileUpload["clearLabel"]);
                 this.model.state = state;
