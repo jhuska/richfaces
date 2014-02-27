@@ -79,7 +79,8 @@
     var UID_ALT = "rf_fu_uid_alt";
     var FAKE_PATH = "C:\\fakepath\\";
     var ITEM_HTML = '<div class="rf-fu-itm">'
-        + '<span class="rf-fu-itm-lft"><span class="rf-fu-itm-lbl"/><span class="rf-fu-itm-st"/></span>'
+        + '<span class="rf-fu-itm-lft"><span class="rf-fu-itm-lbl"/><span class="rf-fu-itm-st" />'
+        + '<progress max="100" value="0" class="rf-fu-itm-pb"/></span>'
         + '<span class="rf-fu-itm-rgh"><a href="javascript:void(0)" class="rf-fu-itm-lnk"/></span></div>';
 
     var ITEM_STATE = {
@@ -314,7 +315,6 @@
                     items.push(this.items[i].model);
                 }
                 rf.Event.fire(this.element, "onuploadcomplete", items);
-                rf.submitForm(this.form, {"org.richfaces.ajax.component": this.id}, this.id);
             }
         };
     })());
@@ -331,6 +331,7 @@
                 var leftArea = this.element.children(".rf-fu-itm-lft:first");
                 this.label = leftArea.children(".rf-fu-itm-lbl:first");
                 this.state = this.label.nextAll(".rf-fu-itm-st:first");
+                this.progressBar = this.label.nextAll(".rf-fu-itm-pb:first").hide();
                 this.link = leftArea.next().children("a");
                 this.label.html(this.model.name);
                 this.link.html(this.fileUpload["deleteLabel"]);
@@ -345,13 +346,13 @@
 
             startUploading: function() {
                 this.state.css("display", "block");
+                this.progressBar.show();
                 this.state.html("0 %");
                 this.link.html("");
                 this.model.state = ITEM_STATE.UPLOADING;
                 this.uid = Math.random();
 
-                var /*xhr = new XMLHttpRequest(),*/
-                    formData = new FormData(this.fileUpload.form[0]);
+                var formData = new FormData(this.fileUpload.form[0]);
                     fileName = this.model.file.name;
 
                 formData.append(this.fileUpload.id, this.model.file);
@@ -362,51 +363,42 @@
                 formData.append('javax.faces.partial.execute', this.fileUpload.id);
 
                 if (jsf.getClientWindow()) {
-                    formData.append('javax.faces.ClientWindow' ,jsf.getClientWindow())
+                    formData.append('javax.faces.ClientWindow', jsf.getClientWindow())
                 };
 
                 var originalAction = this.fileUpload.form.attr("action"),
                     delimiter = originalAction.indexOf("?") == -1 ? "?" : "&",
                     newAction =  originalAction + delimiter + UID + "=" + this.uid;
 
-                var createRfXHR = function(item) {
+                this.xhr = new XMLHttpRequest();
 
-                    return function() {
-                        var rfXhr = $.ajaxSettings.xhr();
-
-                            rfXhr.upload.onprogress = $.proxy(function(e) {
-                                console.log("progress");
-                                console.log(e);
-                                if (e.lengthComputable) {
-                                    item.state.html( (e.loaded / e.totalSize) + " %" );
-                                }
-                            }, item);
-
-                            rfXhr.onload = $.proxy(function (e) {
-                                item.finishUploading(ITEM_STATE.DONE);
-                                item.fileUpload.__startUpload();
-                            }, item);
-
-                            rfXhr.onerror = $.proxy(function (e) {
-                                item.finishUploading(ITEM_STATE.SERVER_ERROR);
-                            }, item);
-
-                            return rfXhr;
+                this.xhr.open('POST', newAction, true);
+                this.xhr.upload.onprogress = $.proxy(function(e) {
+                        if (e.lengthComputable) {
+                            var progress = Math.floor((e.loaded / e.total) * 100);
+                            this.state.html( progress + " %" );
+                            this.progressBar.val(progress);
                         }
-                    };
+                    }, this);
 
-                $.ajax({
-                    data: formData,
-                    processData: false, //jQuery cannot process FormData
-                    url: newAction,
-                    xhr: createRfXHR(this)
-                });
+                this.xhr.upload.onload = $.proxy(function (e) {
+                        this.finishUploading(ITEM_STATE.DONE);
+                        jsf.ajax.response(this.xhr, {});
+                        this.fileUpload.__startUpload();
+                    }, this);
+
+                this.xhr.upload.onerror = $.proxy(function (e) {
+                        this.finishUploading(ITEM_STATE.SERVER_ERROR);
+                    }, this);
+
+                this.xhr.send(formData);
 
                 rf.Event.fire(this.fileUpload.element, "onfilesubmit", this.model);
             },
 
             finishUploading: function(state) {
                 this.state.html(this.fileUpload[state + "Label"]);
+                this.progressBar.hide();
                 this.link.html(this.fileUpload["clearLabel"]);
                 this.model.state = state;
             }
