@@ -383,12 +383,15 @@
 
                 this.xhr.upload.onload = $.proxy(function (e) {
                         this.finishUploading(ITEM_STATE.DONE);
-                        jsf.ajax.response(this.xhr, {});
                         this.fileUpload.__startUpload();
                     }, this);
 
                 this.xhr.upload.onerror = $.proxy(function (e) {
                         this.finishUploading(ITEM_STATE.SERVER_ERROR);
+                    }, this);
+                    
+                this.xhr.onload = $.proxy(function (e) {
+                        jsf.ajax.response(this.xhr, {});
                     }, this);
 
                 this.xhr.send(formData);
