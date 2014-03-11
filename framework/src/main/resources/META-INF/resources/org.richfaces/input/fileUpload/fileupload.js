@@ -73,7 +73,7 @@
         if (this.onfileselect) {
             rf.Event.bind(this.element, "onfileselect", new Function("event", this.onfileselect));
         }
-    }
+    };
 
     var UID = "rf_fu_uid";
     var UID_ALT = "rf_fu_uid_alt";
@@ -287,11 +287,11 @@
 
             __getTotalItemCount : function() {
                 return this.__getItemCountByState(this.items, ITEM_STATE.NEW)
-                    + this.__getItemCountByState(this.submitedItems, ITEM_STATE.DONE)
+                    + this.__getItemCountByState(this.submitedItems, ITEM_STATE.DONE);
             },
 
             __getItemCountByState : function(items) {
-                var statuses = {}
+                var statuses = {};
                 var s = 0;
                 for ( var i = 1; i < arguments.length; i++) {
                     statuses[arguments[i]] = true;
@@ -363,7 +363,7 @@
                 formData.append('javax.faces.partial.execute', this.fileUpload.id);
 
                 if (jsf.getClientWindow()) {
-                    formData.append('javax.faces.ClientWindow', jsf.getClientWindow())
+                    formData.append('javax.faces.ClientWindow', jsf.getClientWindow());
                 };
 
                 var originalAction = this.fileUpload.form.attr("action"),
@@ -381,17 +381,34 @@
                         }
                     }, this);
 
-                this.xhr.upload.onload = $.proxy(function (e) {
-                        this.finishUploading(ITEM_STATE.DONE);
-                        this.fileUpload.__startUpload();
-                    }, this);
-
                 this.xhr.upload.onerror = $.proxy(function (e) {
                         this.finishUploading(ITEM_STATE.SERVER_ERROR);
                     }, this);
                     
                 this.xhr.onload = $.proxy(function (e) {
-                        jsf.ajax.response(this.xhr, {});
+                    switch (e.target.status) {
+                        case 413:
+                            responseStatus = ITEM_STATE.SIZE_EXCEEDED;
+                            break;
+                        case 200:
+                            responseStatus = ITEM_STATE.DONE;
+                            break;
+                        default: // 500 - error in processing parts
+                            responseStatus = ITEM_STATE.SERVER_ERROR;
+                    }
+                    
+                    var responseContext = {
+                            source: this.fileUpload.element[0],
+                            element: this.fileUpload.element[0],
+                            /* hack for MyFaces */
+                            _mfInternal: {
+                                _mfSourceControlId: this.fileUpload.element.attr('id')
+                            }
+                        };
+                        
+                        jsf.ajax.response(this.xhr, responseContext);
+                        this.finishUploading(responseStatus);
+                        this.fileUpload.__startUpload();
                     }, this);
 
                 this.xhr.send(formData);
