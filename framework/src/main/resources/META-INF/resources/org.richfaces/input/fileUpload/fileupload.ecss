@@ -176,3 +176,19 @@
     display: none;
     margin-top: 5px;
 }
+
+.rf-fu-itm .progress {
+	height: 20px;
+	margin-bottom: 0px;
+	border-radius: 4px;
+}
+
+.rf-fu-itm .progress-bar {
+	text-align: right;
+	font-size: 11px;
+	line-height: 18px;
+}
+
+.rf-fu-itm .progress-bar span {
+	margin-right: 10px;
+}
