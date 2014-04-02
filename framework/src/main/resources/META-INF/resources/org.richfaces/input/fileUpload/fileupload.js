@@ -158,6 +158,10 @@
             __addItemsFromDrop: function(dropEvent) {
                 dropEvent.stopPropagation();
                 dropEvent.preventDefault();
+                
+                if (this.maxFilesQuantity && this.__getTotalItemCount() >= this.maxFilesQuantity) {
+                    return;
+                }
 
                 this.__addFiles(dropEvent.originalEvent.dataTransfer.files);
             },
@@ -188,7 +192,7 @@
                     }
                 }
                 if (this.__accept(fileName) && (!this.noDuplicate || !this.__isFileAlreadyAdded(fileName))) {
-                    this.input.hide();
+                    this.input.remove();
                     this.input.unbind("change", this.addProxy);
                     var item = new Item(this, file);
                     this.list.append(item.getJQuery());
