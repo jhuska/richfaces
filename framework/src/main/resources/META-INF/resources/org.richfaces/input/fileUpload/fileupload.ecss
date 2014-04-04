@@ -26,6 +26,7 @@
     border-width: 1px;
     border-radius: '#{richSkin.panelBorderRadius}';
     width: 400px; /*TODO Remove it*/
+    outline: none;
 }
 
 .rf-fu-hdr {

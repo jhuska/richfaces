@@ -42,7 +42,7 @@
     <cc:implementation>
         <cdk:object name="attributes" value="#{component.attributes}" />
         <cdk:object name="disabled" value="#{attributes['disabled']}" />
-        <div id="#{clientId}" class="rf-fu #{attributes['styleClass']}" cdk:passThroughWithExclusions="">
+        <div id="#{clientId}" class="rf-fu #{attributes['styleClass']}" cdk:passThroughWithExclusions="" tabindex="-1">
             <div class="rf-fu-hdr">
                 <span class="rf-fu-btns-lft">
                     <span class="rf-fu-btn-add#{disabled ? '-dis' : ''}">
