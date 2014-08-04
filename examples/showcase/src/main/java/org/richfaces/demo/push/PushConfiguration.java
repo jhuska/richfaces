@@ -37,7 +37,7 @@ import javax.faces.context.FacesContext;
 public class PushConfiguration {
 
     public boolean isJmsEnabled() {
-        return JMSInitializer.isJmsEnabled();
+        return false;
     }
 
     public boolean isPushEnabled() {

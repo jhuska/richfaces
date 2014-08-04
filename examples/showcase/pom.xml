@@ -147,13 +147,6 @@
             <artifactId>rewrite-servlet</artifactId>
         </dependency>
         
-        <!-- JBoss AS7 management -->
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-controller-client</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        
         <!-- Jsoup used for validation of safe html input -->
         <dependency>
             <groupId>org.jsoup</groupId>
